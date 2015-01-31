@@ -1,0 +1,236 @@
+digraph arlo {
+	/* default settings */
+	node [fontname="Helvetica"];
+	edge [arrowhead=vee,fontname="Helvetica"];
+
+	/* entities */
+	user [shape=box];
+	profile [shape=box];
+	queue [shape=box];
+	video [shape=box];
+	episode [shape=box];
+	creative [shape=box];
+	tag [shape=box];
+	character [shape=box];
+	releaseDate [shape=box];
+	streamLink [shape=box];
+	productionCompany [shape=box];
+	criticReview [shape=box];
+	credit [shape=box];
+	profileQueue [shape=box,peripheries=2];
+	queueVideo [shape=box,peripheries=2];
+	creativeVideo [shape=box,peripheries=2];
+	creativeCharacter [shape=box,peripheries=2];
+	videoTag [shape=box,peripheries=2];
+	queueGenre [shape=box,peripheries=2];
+	videoProductionCompany [shape=box,peripheries=2];
+	creativeCredit [shape=box,peripheries=2];
+
+	/* primary keys */
+	userId_pk [label=<<u>userId</u>>];
+	profileId_pk [label=<<u>profileId</u>>];
+	queueId_pk [label=<<u>queueId</u>>];
+	videoId_pk [label=<<u>videoId</u>>];
+	episodeId_pk [label=<<u>episodeId</u>>];
+	creativeId_pk [label=<<u>creativeId</u>>];
+	genreId_pk [label=<<u>genreId</u>>];
+	characterId_pk [label=<<u>characterId</u>>];
+	releaseDateId_pk [label=<<u>releaseDateId</u>>];
+	streamLinkId_pk [label=<<u>streamLinkId</u>>];
+	productionCompanyId_pk [label=<<u>productionCompanyId</u>>];
+	criticReviewId_pk [label=<<u>criticReviewId</u>>];
+
+	/* foreign keys */
+	videoId_fk [label=<<u>videoId</u>>];
+	releaseDateId_fk [label=<<u>releaseDateId</u>>];
+	userId_fk [label=<<u>userId</u>>];
+
+	/* weak primary keys */
+	profileId_weak_pk [label=<<u>profileId</u>>];
+	queueId_weak_pk [label=<<u>queueId</u>>];
+	videoId_weak_pk [label=<<u>videoId</u>>];
+	creativeId_weak_pk [label=<<u>creativeId</u>>];
+	characterId_weak_pk [label=<<u>characterId</u>>];
+	genreId_weak_pk [label=<<u>genreId</u>>];
+	productionCompanyId_weak_pk [label=<<u>productionCompanyId</u>>];
+	creditId_weak_pk [label=<<u>creditId</u>>];
+
+	/* relations */
+	has [shape=diamond];
+	is [shape=diamond];
+	user -> is [label="1"]
+	is -> profile [label="1"]
+	video -> has [label="1"];
+	has -> episode [label="n"];
+	video -> has [label="1"];
+	has -> streamLink [label="n"];
+	video -> has [label="1"];
+	has -> criticReview [label="n"];
+	releaseDate -> has [label="1"];
+	has -> video [label="n"];
+	profile -> has [label="m"];
+	has -> profileQueue [label="n"];
+	queue -> is [label="m"];
+	is -> profileQueue [label="n"];
+	queue -> has [label="m"];
+	has -> queueVideo [label="n"];
+	video -> is [label="m"];
+	is -> queueVideo [label="n"];
+	creative -> has [label="m"];
+	has -> creativeVideo [label="n"];
+	video -> is [label="m"];
+	is -> creativeVideo [label="n"];
+	creative -> has [label="m"];
+	has -> creativeCharacter [label="n"];
+	character -> is [label="m"];
+	is -> creativeCharacter [label="n"];
+	video -> has [label="m"];
+	has -> videoGenre [label="n"];
+	genre -> is [label="m"];
+	is -> videoGenre [label="n"];
+	queue -> has [label="m"];
+	has -> queueGenre [label="n"];
+	genre -> is [label="m"];
+	is -> queueGenre [label="n"];
+	video -> has [label="m"];
+	has -> videoProductionCompany [label="n"];
+	productionCompany -> is [label="m"];
+	is -> videoProductionCompany [label="n"];
+
+	/* user attributes */
+	user -> userId_pk;
+	user -> hash;
+	user -> salt;
+	user -> activation;
+	user -> email;
+
+	/* profile attributes */
+	profile -> profileId_pk;
+	profile -> firstName;
+	profile -> lastName;
+	profile -> profileImagePath;
+	profile -> userId_fk;
+
+	/* queue attributes */
+	queue -> queueId_pk;
+	queue -> queueName;
+	queue -> creationDate;
+
+	/* video attributes */
+	video -> videoId_pk;
+	video -> videoName;
+	video -> videoImagePath;
+	video -> boxOffice;
+	video -> runtime;
+	video -> trailerPath;
+	video -> rottentomatoesPercent;
+	video -> rating;
+	video -> videoPlot;
+	video -> language;
+	video -> budget;
+	video -> openingWeekendGross;
+	video -> gross;
+	video -> alternateTitle;
+	
+	video -> officialSite;
+	video -> filmingLocation;
+
+	video -> tagline;
+
+	video -> quotes;
+
+	video -> videoUserComment;
+
+	video -> releaseDateId_fk;
+
+
+	/* episode attributes */
+	episode -> episodeId_pk;
+	episode -> episodeTitle;
+	episode -> number;
+	episode -> season;
+	episode -> episodePlot;
+	episode -> airDate;
+	episode -> network;
+
+	episode -> episodeUserComment;
+
+	episode -> videoId_fk;
+
+	/* creative attributes */
+	creative -> creativeId_pk;
+	creative -> creativeName;
+	creative -> creativeType;
+	creative -> bio;
+	creative -> birthday;
+	creative -> birthplace;
+
+	/* genre attributes */
+	genre -> genreId_pk;
+	genre -> genreTitle;
+
+	/* character attributes */
+	character -> characterId_pk;
+	character -> characterName;
+
+	/* releaseDate attributes */
+	releaseDate -> releaseDateId_pk;
+	releaseDate -> releaseDateDate;
+
+	/* streamLink attributes */
+	streamLink -> streamLinkId_pk;
+	streamLink -> streamLinkUrl;
+	streamLink -> streamLinkSite;
+	streamLink -> streamLinkPrice;
+	streamLink -> videoId_fk;
+
+	/* productionCompany attributes */
+	productionCompany -> productionCompanyId_pk;
+	productionCompany -> productionCompanyName;
+
+	/* criticReview attributes */
+	criticReview -> criticReviewId_pk;
+	criticReview -> criticReviewText;
+	criticReview -> criticReviewAuthor;
+	criticReview -> criticReviewDate;
+	criticReview -> criticReviewPublication;
+	criticReview -> videoId_fk;
+
+
+	
+	/* credit attributes */
+	credit -> creditId_pk;
+	credit -> creditDescription;
+
+	/* profileQueue attributes */
+	profileQueue -> profileId_weak_pk;
+	profileQueue -> queueId_weak_pk;
+
+	/* queueVideo attributes */
+	queueVideo -> queueId_weak_pk;
+	queueVideo -> videoId_weak_pk;
+
+	/* creativeVideo attributes */
+	creativeVideo -> creativeId_weak_pk;
+	creativeVideo -> videoId_weak_pk;
+
+	/* creativeCharacter attributes */
+	creativeCharacter -> creativeId_weak_pk;
+	creativeCharacter -> characterId_weak_pk;
+
+	/* videoGenre attributes */
+	videoGenre -> videoId_weak_pk;
+	videoGenre -> genreId_weak_pk;
+
+	/* queueGenre attributes */
+	queueGenre -> queueId_weak_pk;
+	queueGenre -> genreId_weak_pk;
+
+	/* videoProductionCompany attributes */
+	videoProductionCompany -> videoId_weak_pk;
+	videoProductionCompany -> productionCompanyId_weak_pk;
+
+	/* creativeCredit attributes */
+	creativeCredit -> creativeId_weak_pk;
+	creativeCredit -> creditId_weak_pk;
+}
