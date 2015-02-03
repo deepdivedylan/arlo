@@ -7,7 +7,7 @@
 $videoSearch = (filter_input(INPUT_GET, "videoSearch", FILTER_SANITIZE_STRING));
 
 $apikey = 'punr7byvgya9vwua5hbvp8pp';
-$q = urlencode('$videoSearch');
+$q = urlencode($videoSearch);
 
 // build query with apikey and video search query
 $endpoint = 'http://api.rottentomatoes.com/api/public/v1.0/movies.json?apikey=' . $apikey . '&q=' . $q;
