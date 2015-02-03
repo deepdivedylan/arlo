@@ -15,4 +15,13 @@
 		<title>ARLO RT API Search</title>
 	</head>
 
-	
+	<body>
+	<form id="rtapisearch" method="get" action="rottentomapiformprocessor.php">
+		<label for="videoSearch">Enter Search</label>
+		<input type="text" id="videoSearch" name="videoSearch"/><br/>
+		<button id="search" type="submit">Search</button>
+	</form>
+	<p id="outputVideoSearch"></p>
+	</body>
+
+</html>
