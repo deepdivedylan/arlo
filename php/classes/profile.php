@@ -20,7 +20,7 @@ class Profile {
 	/**
 	 * imagePath for an image user provides
 	 **/
-	private $imagePath = null;
+	private $imagePath;
 
 	/**
 	 * constructor for this profile class

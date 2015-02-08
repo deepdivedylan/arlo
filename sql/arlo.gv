@@ -9,6 +9,7 @@ digraph arlo {
 	queue [shape=box];
 	video [shape=box];
 	episode [shape=box];
+	season [shape=box];
 	creative [shape=box];
 	tag [shape=box];
 	character [shape=box];
@@ -22,18 +23,18 @@ digraph arlo {
 	creativeVideo [shape=box,peripheries=2];
 	creativeCharacter [shape=box,peripheries=2];
 	videoTag [shape=box,peripheries=2];
-	queueGenre [shape=box,peripheries=2];
+	queueTag [shape=box,peripheries=2];
 	videoProductionCompany [shape=box,peripheries=2];
 	creativeCredit [shape=box,peripheries=2];
 
 	/* primary keys */
-	userId_pk [label=<<u>userId</u>>];
 	profileId_pk [label=<<u>profileId</u>>];
 	queueId_pk [label=<<u>queueId</u>>];
 	videoId_pk [label=<<u>videoId</u>>];
 	episodeId_pk [label=<<u>episodeId</u>>];
+	seasonId_pk [label=<<u>seasonId</u>>];
 	creativeId_pk [label=<<u>creativeId</u>>];
-	genreId_pk [label=<<u>genreId</u>>];
+	tagId_pk [label=<<u>tagId</u>>];
 	characterId_pk [label=<<u>characterId</u>>];
 	releaseDateId_pk [label=<<u>releaseDateId</u>>];
 	streamLinkId_pk [label=<<u>streamLinkId</u>>];
@@ -43,7 +44,7 @@ digraph arlo {
 	/* foreign keys */
 	videoId_fk [label=<<u>videoId</u>>];
 	releaseDateId_fk [label=<<u>releaseDateId</u>>];
-	userId_fk [label=<<u>userId</u>>];
+	seasonId_fk [label=<<u>seasonId</u>>];
 
 	/* weak primary keys */
 	profileId_weak_pk [label=<<u>profileId</u>>];
@@ -51,21 +52,23 @@ digraph arlo {
 	videoId_weak_pk [label=<<u>videoId</u>>];
 	creativeId_weak_pk [label=<<u>creativeId</u>>];
 	characterId_weak_pk [label=<<u>characterId</u>>];
-	genreId_weak_pk [label=<<u>genreId</u>>];
+	tagId_weak_pk [label=<<u>tagId</u>>];
 	productionCompanyId_weak_pk [label=<<u>productionCompanyId</u>>];
 	creditId_weak_pk [label=<<u>creditId</u>>];
 
 	/* relations */
 	has [shape=diamond];
 	is [shape=diamond];
-	user -> is [label="1"]
-	is -> profile [label="1"]
 	video -> has [label="1"];
 	has -> episode [label="n"];
 	video -> has [label="1"];
 	has -> streamLink [label="n"];
+	season -> has [label="1"];
+	has -> episode [label="n"];
 	video -> has [label="1"];
 	has -> criticReview [label="n"];
+	video -> has [label="1"];
+   has -> season [label="n"];
 	releaseDate -> has [label="1"];
 	has -> video [label="n"];
 	profile -> has [label="m"];
@@ -85,31 +88,22 @@ digraph arlo {
 	character -> is [label="m"];
 	is -> creativeCharacter [label="n"];
 	video -> has [label="m"];
-	has -> videoGenre [label="n"];
-	genre -> is [label="m"];
-	is -> videoGenre [label="n"];
+	has -> videoTag [label="n"];
+	tag -> is [label="m"];
+	is -> videoTag [label="n"];
 	queue -> has [label="m"];
-	has -> queueGenre [label="n"];
-	genre -> is [label="m"];
-	is -> queueGenre [label="n"];
+	has -> queueTag [label="n"];
+	tag -> is [label="m"];
+	is -> queueTag [label="n"];
 	video -> has [label="m"];
 	has -> videoProductionCompany [label="n"];
 	productionCompany -> is [label="m"];
 	is -> videoProductionCompany [label="n"];
 
-	/* user attributes */
-	user -> userId_pk;
-	user -> hash;
-	user -> salt;
-	user -> activation;
-	user -> email;
-
 	/* profile attributes */
 	profile -> profileId_pk;
-	profile -> firstName;
-	profile -> lastName;
 	profile -> profileImagePath;
-	profile -> userId_fk;
+	profile -> bowtieUserId;
 
 	/* queue attributes */
 	queue -> queueId_pk;
@@ -120,54 +114,50 @@ digraph arlo {
 	video -> videoId_pk;
 	video -> videoName;
 	video -> videoImagePath;
-	video -> boxOffice;
 	video -> runtime;
 	video -> trailerPath;
 	video -> rottentomatoesPercent;
 	video -> rating;
 	video -> videoPlot;
-	video -> language;
+/*	video -> language;
 	video -> budget;
 	video -> openingWeekendGross;
 	video -> gross;
 	video -> alternateTitle;
-	
 	video -> officialSite;
 	video -> filmingLocation;
-
 	video -> tagline;
-
-	video -> quotes;
-
+	video -> quotes;*/
 	video -> videoUserComment;
-
 	video -> releaseDateId_fk;
-
 
 	/* episode attributes */
 	episode -> episodeId_pk;
 	episode -> episodeTitle;
-	episode -> number;
-	episode -> season;
+	episode -> episodeNumber;
 	episode -> episodePlot;
 	episode -> airDate;
 	episode -> network;
-
 	episode -> episodeUserComment;
-
+	episode -> seasonId_fk;
 	episode -> videoId_fk;
+
+	/* season attributes */
+	season -> seasonId_pk;
+	season -> seasonNumber;
+	season -> videoId_fk;
 
 	/* creative attributes */
 	creative -> creativeId_pk;
 	creative -> creativeName;
 	creative -> creativeType;
 	creative -> bio;
-	creative -> birthday;
-	creative -> birthplace;
+/*	creative -> birthday;
+	creative -> birthplace;*/
 
-	/* genre attributes */
-	genre -> genreId_pk;
-	genre -> genreTitle;
+	/* tag attributes */
+	tag -> tagId_pk;
+	tag -> tagTitle;
 
 	/* character attributes */
 	character -> characterId_pk;
@@ -196,8 +186,6 @@ digraph arlo {
 	criticReview -> criticReviewPublication;
 	criticReview -> videoId_fk;
 
-
-	
 	/* credit attributes */
 	credit -> creditId_pk;
 	credit -> creditDescription;
@@ -218,13 +206,13 @@ digraph arlo {
 	creativeCharacter -> creativeId_weak_pk;
 	creativeCharacter -> characterId_weak_pk;
 
-	/* videoGenre attributes */
-	videoGenre -> videoId_weak_pk;
-	videoGenre -> genreId_weak_pk;
+	/* videoTag attributes */
+	videoTag -> videoId_weak_pk;
+	videoTag -> tagId_weak_pk;
 
-	/* queueGenre attributes */
-	queueGenre -> queueId_weak_pk;
-	queueGenre -> genreId_weak_pk;
+	/* queueTag attributes */
+	queueTag -> queueId_weak_pk;
+	queueTag -> tagId_weak_pk;
 
 	/* videoProductionCompany attributes */
 	videoProductionCompany -> videoId_weak_pk;
