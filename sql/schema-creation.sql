@@ -19,7 +19,6 @@ CREATE TABLE queue (
 
 CREATE TABLE video (
 	videoId INT UNSIGNED NOT NULL AUTO_INCREMENT,
-	videoContent VARCHAR(100),
 	videoComment TEXT,
 	PRIMARY KEY(videoId)
 );
