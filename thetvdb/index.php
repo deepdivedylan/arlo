@@ -2,16 +2,18 @@
 // verify the search parameter
 $search = urlencode(filter_input(INPUT_GET, "search", FILTER_SANITIZE_STRING));
 if(empty($search) === false) {
-	throw(new InvalidArgumentException("invalid search parameter"));
+	echo "<span class=\"alert alert-danger\">Invalid search parameters. Please re-enter the search query and try again.</span>";
+	exit;
 }
 
 // read the config for the API key
-require_once("encrypted-config.php");
+require_once("../lib/encrypted-config.php");
 $config = readConfig("/etc/apache2/arlo.ini");
 $apiKey = $config["theTvDbiApiKey"];
 
 if (($xmlData = file_get_contents("http://thetvdb.com/api/GetSeries.php?seriesname=$search")) === false) {
-	throw(new RuntimeException("unable to query the TV DB"));
+	echo "<span class=\"alert alert-danger\">Unable to connect to the TV DB.</span>";
+	exit;
 }
 
 $xmlParser = new SimpleXMLElement($xmlData);
@@ -29,7 +31,8 @@ foreach($xmlParser->Series as $series) {
 	$actors = array();
 	$actorUrl = "http://thetvdb.com/api/$apiKey/series/$seriesid/actors.xml";
 	if(($actorXml = file_get_contents($actorUrl)) === false) {
-		throw(new RuntimeException("unable to retrieve actors"));
+		echo "<span class=\"alert alert-danger\">Unable to retrieve actors.</span>";
+		exit;
 	}
 	$actorParser = new SimpleXMLElement($actorXml);
 	foreach($actorParser->Actor as $actor) {
@@ -41,7 +44,8 @@ foreach($xmlParser->Series as $series) {
 	$banners = array();
 	$bannerUrl = "http://thetvdb.com/api/$apiKey/series/$seriesid/banners.xml";
 	if(($bannerXml = file_get_contents($bannerUrl)) === false) {
-		throw(new RuntimeException("unable to retrieve banners"));
+		echo "<span class=\"alert alert-danger\">Unable to retrieve banners.</span>";
+		exit;
 	}
 	$bannerParser = new SimpleXMLElement($bannerXml);
 	foreach($bannerParser->Banner as $banner) {
