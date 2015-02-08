@@ -3,7 +3,7 @@
  * Form processor for themoviedb API search
  */
 // use filter_input to sanitize video search
-$videoSearch = (filter_input(INPUT_GET, "videoSearch", FILTER_SANITIZE_STRING));
+$videoSearch = (filter_input(INPUT_GET, "search", FILTER_SANITIZE_STRING));
 
 require_once("../thetvdb/encrypted-config.php");
 $config = readConfig("/etc/apache2/arlo.ini");
