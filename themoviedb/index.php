@@ -5,7 +5,7 @@
 // use filter_input to sanitize video search
 $videoSearch = (filter_input(INPUT_GET, "search", FILTER_SANITIZE_STRING));
 
-require_once("../thetvdb/encrypted-config.php");
+require_once("../lib/encrypted-config.php");
 $config = readConfig("/etc/apache2/arlo.ini");
 $apiKey = $config["theMovieDbApiKey"];
 $q = urlencode($videoSearch);
