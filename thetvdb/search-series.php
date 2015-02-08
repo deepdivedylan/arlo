@@ -1,11 +1,16 @@
 <?php
+// verify the search parameter
+$search = urlencode(filter_input(INPUT_GET, "search", FILTER_SANITIZE_STRING));
+if(empty($search) === false) {
+	throw(new InvalidArgumentException("invalid search parameter"));
+}
+
 // read the config for the API key
 require_once("encrypted-config.php");
 $config = readConfig("/etc/apache2/arlo.ini");
 $apiKey = $config["theTvDbiApiKey"];
 
-$searchKey = urlencode("Star Trek");
-if (($xmlData = file_get_contents("http://thetvdb.com/api/GetSeries.php?seriesname=$searchKey")) === false) {
+if (($xmlData = file_get_contents("http://thetvdb.com/api/GetSeries.php?seriesname=$search")) === false) {
 	throw(new RuntimeException("unable to query the TV DB"));
 }
 
