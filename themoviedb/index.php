@@ -1,33 +1,82 @@
 <?php
-/**
- * Form processor for themoviedb API search
- */
 // use filter_input to sanitize video search
-$videoSearch = (filter_input(INPUT_GET, "search", FILTER_SANITIZE_STRING));
+$search = (filter_input(INPUT_GET, "search", FILTER_SANITIZE_STRING));
 
 require_once("../lib/encrypted-config.php");
 $config = readConfig("/etc/apache2/arlo.ini");
 $apiKey = $config["theMovieDbApiKey"];
-$q = urlencode($videoSearch);
+$q = urlencode($search);
 
 // build query with apikey and video search query
 $endpoint = "https://api.themoviedb.org/3/search/movie?api_key=$apiKey&append_to_response=releases,trailers&query=$q";
 
-if (($jsonData = file_get_contents($endpoint)) === false) {
-	throw(new RuntimeException("unable to query the Movie DB"));
+if(($jsonData = file_get_contents($endpoint)) === false) {
+	echo "<span class=\"alert alert-danger\">Unable to download Movie DB search results.</span>";
+	exit;
 }
 
 // decode the json data to make it easier to parse the php
-$search_results = json_decode($jsonData);
-if ($search_results === null) die('Error parsing json');
-var_dump($search_results);
+$searchResults = json_decode($jsonData);
+if ($searchResults === null){
+	echo "<span class=\"alert alert-danger\">Unable to read Movie DB search results.</span>";
+	exit;
+}
 
 // display the data
-$movies = $search_results->movies;
-echo '<ul>';
-foreach ($movies as $movie) {
-	echo '<li><a href="' . $movie->links->alternate . '">' . $movie->title . " (" . $movie->year . ")</a></li>";
-}
-echo '</ul>';
+$results = array();
+$movies = $searchResults->results;
+foreach($movies as $movie) {
+	// get the core data about the movie
+	$result["id"] = $movie->id;
+	$result["name"] = $movie->title;
 
+	// download additional data about the movie
+	$endpoint = "https://api.themoviedb.org/3/movie/" . $movie->id . "?api_key=$apiKey";
+	if(($jsonData = file_get_contents($endpoint)) === false) {
+		echo "<span class=\"alert alert-danger\">Unable to download Movie DB search results.</span>";
+		exit;
+	}
+
+	// decode the supplemental data
+	$movieData = json_decode($jsonData);
+	if($movieData === null) {
+		echo "<span class=\"alert alert-danger\">Unable to read Movie DB search results.</span>";
+		exit;
+	}
+
+	// save the supplemental data
+	$result["imdbId"] = $movieData->imdb_id;
+	$result["plot"] = $movieData->overview;
+	$result["banners"] = array($movieData->poster_path);
+
+	// download additional cast data
+	$endpoint = "https://api.themoviedb.org/3/movie/" . $movie->id . "/credits?api_key=$apiKey";
+	if(($jsonData = file_get_contents($endpoint)) === false) {
+		echo "<span class=\"alert alert-danger\">Unable to download Movie DB search results.</span>";
+		exit;
+	}
+
+	// decode the supplemental data
+	$castData = json_decode($jsonData);
+	if($castData === null) {
+		echo "<span class=\"alert alert-danger\">Unable to read Movie DB search results.</span>";
+		exit;
+	}
+
+	// save the actor data
+	$actors = array();
+	foreach($castData->cast as $cast) {
+		if(@isset($cast->cast_id) === true) {
+			$actors[] = $cast->name;
+		}
+	}
+
+	// save the result
+	$result["actors"] = $actors;
+	$results[] = $result;
+}
+
+// send the result
+header("Content-type: text/json");
+echo json_encode($results);
 ?>
