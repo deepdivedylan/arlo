@@ -16,7 +16,7 @@ require_once("../lib/encrypted-config.php");
  * @see profileQueue
  * @author Alonso Indacochea <alonso@hermesdevelopment.com>
  **/
-class ProfileQueue extends UnitTestCase {
+class ProfileQueueTest extends UnitTestCase {
 	/**
 	 * mysqli object shared amongst all tests
 	 **/
