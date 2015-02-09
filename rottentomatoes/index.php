@@ -52,7 +52,7 @@ foreach($searchResults->movies as $movie) {
 	// get the available stream and digital purchase options
 	$imdbid = $movie->alternate_ids->imdb;
 	$canIStreamItURL = "http://www.canistream.it/external/imdb/$imdbid?l=default";
-	$result = $canIStreamItURL;
+	$result["stream"] = $canIStreamItURL;
 
 	// save this result
 	$results[] = $result;

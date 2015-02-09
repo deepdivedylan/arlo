@@ -58,7 +58,7 @@ foreach($xmlParser->Series as $series) {
 	// get the available stream and digital purchase options
 	$imdbid = $series->IMDB_ID->__toString();
 	$canIStreamItURL = "http://www.canistream.it/external/imdb/$imdbid?l=default";
-	$result = $canIStreamItURL;
+	$result["stream"] = $canIStreamItURL;
 
 	// save this result
 	$results[] = $result;
