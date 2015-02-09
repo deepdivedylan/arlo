@@ -1,6 +1,10 @@
 <?php
 // use filter_input to sanitize video search
 $search = (filter_input(INPUT_GET, "search", FILTER_SANITIZE_STRING));
+if(empty($search) === true) {
+	echo "<span class=\"alert alert-danger\">Invalid search parameters. Please re-enter the search query and try again.</span>";
+	exit;
+}
 
 require_once("../lib/encrypted-config.php");
 $config = readConfig("/etc/apache2/arlo.ini");
