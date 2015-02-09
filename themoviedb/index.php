@@ -71,6 +71,11 @@ foreach($movies as $movie) {
 		}
 	}
 
+	// get the available stream and digital purchase options
+	$imdbid = $movieData->imdb_id;
+	$canIStreamItURL = "http://www.canistream.it/external/imdb/$imdbid?l=default";
+	$result = $canIStreamItURL;
+
 	// save the result
 	$result["actors"] = $actors;
 	$results[] = $result;
