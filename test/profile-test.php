@@ -63,9 +63,9 @@ class ProfileTest extends unitTestCase {
 	 * test creating a new Profile and inserting it into mySQL
 	 **/
 	public function testInsertNewProfile() {
-		// zeroth, test mySQL and Profile are sane
+		// zeroth, verify mySQL connected OK
+			// TODO: verify with Dylan and Alonso if wise to assertNotNull for profile as well as in profilequeue-test.php Alonso created
 		$this->assertNotNull($this->mysqli);
-		$this->assertNotNull($this->profile);
 		// first, create a profile to post to mySQL
 		$this->profile = new Profile(null, $this->email, $this->imagePath);
 		// second, insert the profile to mySQL
@@ -80,7 +80,47 @@ class ProfileTest extends unitTestCase {
 	/**
 	 * test updating a Profile in mySQL
 	 **/
-	
+	public function testUpdateProfile() {
+		// zeroth, verify mySQL connected Ok
+		$this->assertNotNull($this->mysqli);
+		// first, create a profile to post to mySQL
+		$this->profile = new Profile(null, $this->email, $this->imagePath);
+		// second, insert the profile to mySQL
+		$this->profile->insert($this->mysqli);
+		// third, update the profile and post the changes to mySQL
+		$newEmail = "johndoe@noemail.com";
+		$this->profile->setEmail($newEmail);
+		$this->profile->update($this->mysqli);
+		// finally, compare the fields
+		$this->assertNotNull($this->profile->getProfileId());
+		$this->assertTrue($this->profile->getProfileId() > 0);
+		$this->assertIdentical($this->profile->getEmail(),			$newEmail);
+		$this->assertIdentical($this->profile->getImagePath(),	$this->imagePath);
+	}
+
+	/**
+	 * test deleting a Profile in mySQL
+	 **/
+	public function testDeleteProfile() {
+		// zeroth, verify mySQL connected OK
+		$this->assertNotNull($this->mysqli);
+		// first, create a profile to post to mySQL
+		$this->profile = new Profile(null, $this->email, $this->imagePath);
+		// second, insert the profile to mySQL
+		$this->profile->insert($this->mysqli);
+		// third, verify the Profile was inserted
+		$this->assertNotNull($this->profile->getProfileId());
+		$this->assertTrue($this->profile->getProfileId() > 0);
+		// fourth, delete the profile
+		$destroyedProfileId = $this->profile->getProfileId();
+		$this->profile->delete($this->mysqli);
+		$this->profile = null;
+		// finally, try to get the profile and assert we didn't get anything
+		$staticProfile = Profile::getProfileByProfileId($this->mysqli, $destroyedProfileId);
+		$this->assertNull($staticProfile);
+	}
+
+
 
 }
 ?>
