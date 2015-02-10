@@ -86,7 +86,11 @@ class Video {
 	 * @throws InvalidArgumentException if $newVideoComment is not a string or insecure
 	 **/
 	public function setVideoComment($newVideoComment) {
-		// verify that the video comment is secure
+		if(empty($newVideoComment) === true) {
+			$this->videoComment = null;
+			return;
+		}
+			// verify that the video comment is secure
 		$newVideoComment = trim($newVideoComment);
 		$newVideoComment = filter_var($newVideoComment, FILTER_SANITIZE_STRING);
 		if(empty($newVideoComment) === true) {

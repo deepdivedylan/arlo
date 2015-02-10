@@ -94,7 +94,7 @@ class Profile {
 	 * @throws InvalidArgumentException if $newEmail is not a string or insecure
 	 * @throws RangeException if $newEmail is > 100 characters
 	 **/
-	public function setCountry($newEmail) {
+	public function setEmail($newEmail) {
 		// verify that the profile email address is secure
 		$newEmail = trim($newEmail);
 		$newEmail = filter_var($newEmail, FILTER_VALIDATE_EMAIL);
@@ -127,6 +127,11 @@ class Profile {
 	 * @throws RangeException if $newState is > 255 characters
 	 **/
 	public function setImagePath($newImagePath) {
+
+		if(empty($newImagePath) === true) {
+			$this->imagePath = null;
+			return;
+		}
 		// verify that the profile image path is secure
 		$newImagePath = trim($newImagePath);
 		$newImagePath = filter_var($newImagePath, FILTER_VALIDATE_URL);
@@ -169,6 +174,7 @@ class Profile {
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters:"));
 		}
+		var_dump($wasClean);
 		// execute the statement
 		if($statement->execute() === false) {
 			throw(new mysqli_sql_exception("unable to execute mySQL statement"));
