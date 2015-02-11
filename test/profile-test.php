@@ -156,7 +156,7 @@ class ProfileTest extends unitTestCase {
 	}
 
 	// TODO: connect with Dylan and Alonso how to write up this static method get
-//	public function testGetProfileByAllProfils() {
+//	public function testGetProfileByAllProfiles() {
 //
 //	}
 
