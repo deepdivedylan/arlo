@@ -120,6 +120,40 @@ class ProfileTest extends unitTestCase {
 		$this->assertNull($staticProfile);
 	}
 
+	/**
+	 * test grabbing a Profile from mySQL
+	 */
+	public function testGetProfileByProfileId() {
+		// zeroth, verify mySQL connected OK
+		$this->assertNotNull($this->mysqli);
+		// first, create a profile to post to mySQL
+		$this->profile = new Profile(null, $this->email, $this->imagePath);
+		// second, insert the profile to mySQl
+		$this->profile->insert($this->mysqli);
+		// third, get the profile using the static method
+		$staticProfile = Profile::getProfileByProfileId($this->mysqli, $this->profile->getProfileId());
+		// finally, compare the fields
+		$this->assertNotNull($staticProfile->getProfileId());
+		$this->assertTrue($staticProfile->getProfileId() > 0);
+		$this->assertIdentical($staticProfile->getEmail(),			$this->email);
+		$this->assertIdentical($staticProfile->getImagePath(),	$this->imagePath);
+	}
+
+	public function testGetProfileByEmail() {
+		// zeroth, verify mySQL connected OK
+		$this->assertNotNull($this->mysqli);
+		// first, create a profile to post to mySQL
+		$this->profile = new Profile(null, $this->email, $this->imagePath);
+		// second, insert the profile to mySQl
+		$this->profile->insert($this->mysqli);
+		// third, get the profile using the static method
+		$staticProfile = Profile::getProfileByEmail($this->mysqli, $this->profile->getEmail());
+		// finally, compare the fields
+		$this->assertNotNull($staticProfile->getProfileId());
+		$this->assertTrue($staticProfile->getProfileId() > 0);
+		$this->assertIdentical($staticProfile->getEmail(),			$this->email);
+		$this->assertIdentical($staticProfile->getImagePath(),	$this->imagePath);
+	}
 
 
 }
