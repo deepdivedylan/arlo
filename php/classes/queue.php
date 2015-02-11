@@ -310,7 +310,7 @@ class Queue {
 		}
 
 		// create query template
-		$query	 = "SELECT queueId, creationDate FROM queue";
+	$query	 = "SELECT queueId, creationDate FROM queue";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));

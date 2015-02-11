@@ -76,23 +76,55 @@ class QueueTest extends unitTestCase {
 	}
 
 	/**
-	 * test updating a Queue in mySQL
+	 * since we would not update the primary key nor the creation date, we will skip the update method
 	 */
-	public function testUpdateQueue() {
+
+	/**
+	 * test deleting a Queue in mySQL
+	 */
+	public function testDeleteQueue(){
 		// zeroth, verify mySQL connected OK
 		$this->assertNotNull($this->mysqli);
-		// first, create a queue and post to mySQL
+		// first, create a queue to post to mySQL
 		$this->queue = new Queue(null, $this->creationDate);
 		// second, insert the queue to mySQL
 		$this->queue->insert($this->mysqli);
-		// third, update the queue and post the changes to mySQL
-		$newCreationDate = "2015-02-13 09:30:23";
-		$this->queue->setCreationDate($newCreationDate);
-		$tempDate = DateTime::createFromFormat('Y-m-d H:i:s', $this->$newCreationDate);
-		$tempDate->setD
-
-
+		// third, verify the Queue was inserted
+		$this->assertNotNull($this->queue->getQueueId());
+		$this->assertTrue($this->queue->getQueueId() > 0);
+		// fourth, delete the Queue
+		$destroyQueueId = $this->queue->getQueueId();
+		$this->queue->delete($this->mysqli);
+		$this->queue = null;
+		// finally, try to ge the Queue and assert we didn't get anything
+		$staticQueue = Queue::getQueueByQueueId($this->mysqli, $destroyQueueId);
+		$this->assertNull($staticQueue);
 	}
+
+	/**
+	 * test grabbing a Queue from mySQL
+	 */
+	public function testGetQueueByQueueId() {
+		// zeroth, verify mySQL connected OK
+		$this->assertNotNull($this->mysqli);
+		// first, create a queue to post to mySQL
+		$this->queue = new Queue(null, $this->creationDate);
+		// second, insert the queue to mySQL
+		$this->queue->insert($this->mysqli);
+		// third, get the queue using the static method
+		$staticQueue = Queue::getQueueByQueueId($this->mysqli, $this->queue->getQueueId());
+		// finally, compare the fields
+		$this->assertNotNull($staticQueue->getQueueId());
+		$this->assertTrue($staticQueue->getQueueId() > 0);
+		$this->assertIdentical($staticQueue->getCreationDate(),	$this->creationDate);
+	}
+
+	// TODO: connect with Dylan and Alonso how to write up this static method get
+//	public function testGetQueueByAllQueues() {
+//
+//	}
+
+
 }
 
 ?>

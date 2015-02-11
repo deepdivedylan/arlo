@@ -155,6 +155,10 @@ class ProfileTest extends unitTestCase {
 		$this->assertIdentical($staticProfile->getImagePath(),	$this->imagePath);
 	}
 
+	// TODO: connect with Dylan and Alonso how to write up this static method get
+//	public function testGetProfileByAllProfils() {
+//
+//	}
 
 }
 ?>
