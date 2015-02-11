@@ -18,7 +18,7 @@ class ArloSuite extends TestSuite {
 		$this->mysqli = new mysqli($configArray["hostname"], $configArray["username"], $configArray["password"],
 			$configArray["database"]);
 	}
-	
+
 	// the constructor for a TestSuite just sets up all the file names
 	public function __construct() {
 		// run the parent constructor
