@@ -126,6 +126,11 @@ public class DownloadThread implements Runnable {
 			input.close();
 		} catch(IOException io) {
 			error = "Unable to read JSON data: " + io.getMessage();
+		} catch(NullPointerException nullPointer) {
+			if(response.toString().isEmpty()) {
+				json = "[]";
+				return;
+			}
 		}
 
 		json = response.toString();
