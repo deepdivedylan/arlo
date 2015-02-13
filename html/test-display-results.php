@@ -7,7 +7,7 @@
 	<script type="text/javascript" src="../javascript/jsondatareturn.js"></script>
 </head>
 
-<body>
+<body onLoad="sinaloa();">
 	<table id="resultsData"></table>
 </body>
 </html>
