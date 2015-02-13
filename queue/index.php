@@ -31,6 +31,7 @@ try {
 		$profileQueue->insert($mysqli);
 	} else {
 		$profileQueue = $profileQueues[0];
+		$queue = Queue::getQueueByQueueId($mysqli, $profileQueue->getQueueId());
 	}
 
 	if(empty($_POST) === true) {
@@ -54,7 +55,7 @@ try {
 			$now = new DateTime();
 			$comment = "Video added at " . $now->format("Y-m-d H:i:s");
 			$video = new Video(null, $comment, $imdbId);
-			$video->insert($mysqli, $video);
+			$video->insert($mysqli);
 		} else {
 			$video = $video[0];
 		}

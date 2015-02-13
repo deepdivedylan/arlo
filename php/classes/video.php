@@ -314,7 +314,7 @@ class Video {
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
-		$wasClean = $statement->bind_param("i", $imdbId);
+		$wasClean = $statement->bind_param("s", $imdbId);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
