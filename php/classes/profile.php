@@ -135,6 +135,9 @@ class Profile {
 	 * @throws RangeException if $newState is > 255 characters
 	 **/
 	public function setImagePath($newImagePath) {
+		if($newImagePath === null) {
+			return;
+		}
 
 		// verify that the profile image path is secure
 		$newImagePath = trim($newImagePath);
