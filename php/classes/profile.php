@@ -22,20 +22,28 @@ class Profile {
 	 **/
 	private $imagePath;
 
+
+	/**
+	 * id bowtie provides user
+	 **/
+	private $bowtieUserId;
+
 	/**
 	 * constructor for this profile class
 	 *
 	 * @param mixed $newProfileId id of the profile
 	 * @param string $newEmail email address of the profile
 	 * @param string $newImagePath imagePath for an image user provides or null if not provided
+	 * @param int $newBowtieUserId id bowtie provides user
 	 * @throws InvalidArgumentException it data types are not valid
 	 * @throws RangeException if data values are out of bounds (e.g. strings too long, negative integers)
 	 **/
-	public function __construct($newProfileId, $newEmail, $newImagePath = null) {
+	public function __construct($newProfileId, $newEmail, $newImagePath = null, $newBowtieUserId) {
 		try {
 			$this->setProfileId($newProfileId);
 			$this->setEmail($newEmail);
 			$this->setImagePath($newImagePath);
+			$this->setBowtieUserId($newBowtieUserId);
 		} catch(InvalidArgumentException $invalidArgument) {
 			// rethrow the exception to the caller
 			throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
@@ -143,6 +151,40 @@ class Profile {
 		// store the profile image path
 		$this->imagePath = $newImagePath;
 	}
+	/**
+	 * accessor method for the bowtieUserId
+	 *
+	 * @return mixed value of bowtieUserId
+	 **/
+	public function getBowtieUserId() {
+		return ($this->bowtieUserId);
+	}
+
+	/**
+	 * mutator method for bowtieUserId
+	 *
+	 * @param mixed $newProfileId new value of $profileId
+	 * @throws InvalidArgumentException if the $newProfileId is not an integer
+	 * @throws RangeException if the $newProfileId is not positive
+	 **/
+	public function setBowtieUserId($newBowtieUserId) {
+		// base case: if the profile id is null, this a new profile without a mySQL assigned id (yet)
+		if($newBowtieUserId === null) {
+			$this->bowtieUserId = null;
+			return;
+		}
+		// verify the profile id is valid
+		$newBowtieUserId = filter_var($newBowtieUserId, FILTER_VALIDATE_INT);
+		if($newBowtieUserId === false) {
+			throw(new InvalidArgumentException("bowtie id is not a valid integer"));
+		}
+		// verify the profile id is positive
+		if($newBowtieUserId <= 0) {
+			throw(new RangeException("bowtie id is not positive"));
+		}
+		// convert and store the profile id
+		$this->bowtieUserId = intval($newBowtieUserId);
+	}
 
 	/**
 	 * inserts this profile into mySQL
@@ -160,13 +202,13 @@ class Profile {
 			throw(new mysqli_sql_exception("not a new profile"));
 		}
 		// create query template
-		$query = "INSERT INTO profile(email, imagePath) VALUES(?, ?)";
+		$query = "INSERT INTO profile(email, imagePath, bowtieUserId) VALUES(?, ?, ?)";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
 		// bind the member variables to the place holders in the template
-		$wasClean = $statement->bind_param("ss", $this->email, $this->imagePath);
+		$wasClean = $statement->bind_param("ssi", $this->email, $this->imagePath, $this->bowtieUserId);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
@@ -230,13 +272,13 @@ class Profile {
 			throw(new mysqli_sql_exception("unable to update a profile that does not exist"));
 		}
 		// create a query template
-		$query = "UPDATE profile SET email = ?, imagePath = ? WHERE profileId = ?";
+		$query = "UPDATE profile SET email = ?, imagePath = ?, bowtieUserId = ? WHERE profileId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
 		// bind the member variables to the place holders in the template
-		$wasClean = $statement->bind_param("ssi", $this->email, $this->imagePath, $this->profileId);
+		$wasClean = $statement->bind_param("ssii", $this->email, $this->imagePath, $this->bowtieUserId, $this->profileId);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
@@ -270,7 +312,7 @@ class Profile {
 			throw(new mysqli_sql_exception("profile id is not positive"));
 		}
 		// create query template
-		$query = "SELECT profileId, email, imagePath FROM profile WHERE profileId = ?";
+		$query = "SELECT profileId, email, imagePath, bowtieUserId FROM profile WHERE profileId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -294,7 +336,64 @@ class Profile {
 			$profile = null;
 			$row = $result->fetch_assoc();
 			if($row !== null) {
-				$profile = new Profile($row["profileId"], $row["email"], $row["imagePath"]);
+				$profile = new Profile($row["profileId"], $row["email"], $row["imagePath"], $row["bowtieUserId"]);
+			}
+		} catch(Exception $exception) {
+			// if the row couldn't be converted, rethrow it
+			throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
+		}
+		// free up memory and return the result
+		$result->free();
+		$statement->close();
+		return($profile);
+	}
+	/**
+	 * gets the profile by profileId
+	 *
+	 * @param resource $mysqli pointer to mySQL connection, by reference
+	 * @param int $profileId profile id to search for
+	 * @return mixed profile found or null if not found
+	 * @throws mysqli_sql_exception when mySQL related errors occur
+	 **/
+	public static function getProfileByBowtieUserId(&$mysqli, $bowtieUserId) {
+		// handle degenerate cases
+		if(gettype($mysqli) !== "object" || get_class($mysqli) !== "mysqli") {
+			throw(new mysqli_sql_exception("input is not a mysqli object"));
+		}
+		// sanitize the profileId before searching
+		$bowtieUserId = filter_var($bowtieUserId, FILTER_VALIDATE_INT);
+		if($bowtieUserId === false) {
+			throw(new mysqli_sql_exception("bowtie id is not an integer"));
+		}
+		if($bowtieUserId <= 0) {
+			throw(new mysqli_sql_exception("bowtie id is not positive"));
+		}
+		// create query template
+		$query = "SELECT profileId, email, imagePath, bowtieUserId FROM profile WHERE bowtieUserId = ?";
+		$statement = $mysqli->prepare($query);
+		if($statement === false) {
+			throw(new mysqli_sql_exception("unable to prepare statement"));
+		}
+		// bind the profile content to the place holder in the template
+		$wasClean = $statement->bind_param("i", $bowtieUserId);
+		if($wasClean === false) {
+			throw(new mysqli_sql_exception("unable to bind parameters"));
+		}
+		// execute the statement
+		if($statement->execute() === false) {
+			throw(new mysqli_sql_exception("unable to execute mySQL statement: " . $statement->error));
+		}
+		// get result from the SELECT query
+		$result = $statement->get_result();
+		if($result === false) {
+			throw(new mysqli_sql_exception("unable to get result set"));
+		}
+		// grab the profile from mySQL
+		try {
+			$profile = null;
+			$row = $result->fetch_assoc();
+			if($row !== null) {
+				$profile = new Profile($row["profileId"], $row["email"], $row["imagePath"], $row["bowtieUserId"]);
 			}
 		} catch(Exception $exception) {
 			// if the row couldn't be converted, rethrow it
@@ -324,7 +423,7 @@ class Profile {
 		$email = filter_var($email, FILTER_SANITIZE_EMAIL);
 
 		// create query template
-		$query = "SELECT profileId, email, imagePath FROM profile WHERE email = ?";
+		$query = "SELECT profileId, email, imagePath, bowtieUserId FROM profile WHERE email LIKE ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -352,7 +451,7 @@ class Profile {
 			$profile = null;
 			$row = $result->fetch_assoc();
 			if($row !== null) {
-				$profile = new Profile($row["profileId"], $row["email"], $row["imagePath"]);
+				$profile = new Profile($row["profileId"], $row["email"], $row["imagePath"], $row["bowtieUserId"]);
 			}
 		} catch(Exception $exception) {
 			// if the row couldn't be converted, rethrow it
@@ -379,7 +478,7 @@ class Profile {
 		}
 
 		// create query template
-		$query	 = "SELECT profileId, email, imagePath FROM profile";
+		$query	 = "SELECT profileId, email, imagePath, bowtieUserId FROM profile";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -400,7 +499,7 @@ class Profile {
 		$profiles = array();
 		while(($row = $result->fetch_assoc()) !== null) {
 			try {
-				$profile	= new Profile($row["profileId"], $row["email"], $row["imagePath"]);
+				$profile	= new Profile($row["profileId"], $row["email"], $row["imagePath"], $row["bowtieUserId"]);
 				$profiles[] = $profile;
 			}
 			catch(Exception $exception) {

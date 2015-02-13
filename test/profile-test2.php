@@ -41,6 +41,11 @@ class ProfileTest extends UnitTestCase {
 	private $imagePath = "clown.jpg";
 
 	/**
+	 * seller's image path
+	 **/
+	private $bowtieUserId = 1;
+
+	/**
 	 * sets up the mySQL connection for this test
 	 **/
 	public function setUp() {
@@ -52,9 +57,9 @@ class ProfileTest extends UnitTestCase {
 		$this->mysqli = new mysqli($configArray["hostname"], $configArray["username"], $configArray["password"],
 			$configArray["database"]);
 		// create instance of first profile
-		$this->profile1 = new Profile(null, $this->email, $this->imagePath);
+		$this->profile1 = new Profile(null, $this->email, $this->imagePath, $this->bowtieUserId);
 
-		$this->profile2 = new Profile(null, 'john@john.com', $this->imagePath);
+		$this->profile2 = new Profile(null, 'john@john.com', $this->imagePath, $this->bowtieUserId);
 	}
 
 	/**
@@ -97,6 +102,8 @@ class ProfileTest extends UnitTestCase {
 		$this->assertIdentical($this->profile1->getProfileId(), $mysqlProfile->getProfileId());
 		$this->assertIdentical($this->profile1->getEmail(), $mysqlProfile->getEmail());
 		$this->assertIdentical($this->profile1->getImagePath(), $mysqlProfile->getImagePath());
+		$this->assertIdentical($this->profile1->getBowtieUserId(), $mysqlProfile->getBowtieUserId());
+
 	}
 
 	/**
@@ -182,6 +189,8 @@ class ProfileTest extends UnitTestCase {
 		$this->assertIdentical($this->profile1->getProfileId(), $mysqlProfile->getProfileId());
 		$this->assertIdentical($this->profile1->getEmail(), $mysqlProfile->getEmail());
 		$this->assertIdentical($this->profile1->getImagePath(), $mysqlProfile->getImagePath());
+		$this->assertIdentical($this->profile1->getBowtieUserId(), $mysqlProfile->getBowtieUserId());
+
 	}
 
 	/**
@@ -221,6 +230,30 @@ class ProfileTest extends UnitTestCase {
 
 		// grab a Profile that could never exist
 		$mysqlProfile = Profile::getProfileByProfileId($this->mysqli, 12);
+		$this->assertNull($mysqlProfile);
+	}
+	/**
+	 *test getting a valid profile by profileId
+	 **/
+	public function testGetValidProfileByBowtieUserId() {
+		$this->assertNotNull($this->profile1);
+		$this->assertNotNull($this->mysqli);
+
+		// first, assert the Profile is inserted into mySQL by grabbing it and asserting the primary key
+		$this->profile1->insert($this->mysqli);
+		$mysqlProfile = Profile::getProfileByBowtieUserId($this->mysqli, $this->profile1->getBowtieUserId());
+		$this->assertIdentical($this->profile1->getBowtieUserId(), $mysqlProfile->getBowtieUserId());
+	}
+
+	/**
+	 * test getting a valid profile by using an invalid profileId
+	 **/
+	public function testGetInvalidProfileByBowtieUserId() {
+		// first, assert the mySQL class is sane
+		$this->assertNotNull($this->mysqli);
+
+		// grab a Profile that could never exist
+		$mysqlProfile = Profile::getProfileByBowtieUserId($this->mysqli, 150);
 		$this->assertNull($mysqlProfile);
 	}
 }

@@ -8,6 +8,7 @@ CREATE TABLE profile (
 	profileId INT UNSIGNED NOT NULL AUTO_INCREMENT,
 	email VARCHAR(100) UNIQUE NOT NULL,
 	imagePath VARCHAR(255),
+	bowtieUserId INT UNSIGNED,
 	PRIMARY KEY(profileId)
 );
 
