@@ -307,5 +307,56 @@ class ProfileQueue {
 			return($profileQueues);
 		}
 	}
+	public static function getAllQueuesByProfileId(&$mysqli, $profileId) {
+		// handle degenerate cases
+		if(gettype($mysqli) !== "object" || get_class($mysqli) !== "mysqli") {
+			throw(new mysqli_sql_exception("input is not a mysqli object"));
+		}
+
+		// create query template
+		$query = "SELECT profileId, queueId, profileQueueName FROM profileQueue WHERE profileId = ?";
+		$statement = $mysqli->prepare($query);
+		if($statement === false) {
+			throw(new mysqli_sql_exception("unable to prepare statement"));
+		}
+		$wasClean = $statement->bind_param("i", $profileId);
+		if($wasClean === false) {
+			throw(new mysqli_sql_exception("unable to bind parameters"));
+		}
+
+		// execute the statement
+		if($statement->execute() === false) {
+			throw(new mysqli_sql_exception("unable to execute mySQL statement: " . $statement->error));
+		}
+
+		// get result from the SELECT query
+		$result = $statement->get_result();
+		if($result === false) {
+			throw(new mysqli_sql_exception("unable to get result set"));
+		}
+		// build an array of Queue
+		$queues = array();
+		while(($row = $result->fetch_assoc()) !== null) {
+			try {
+				$queue = new Queue($row["queueId"], $row["creationDate"]);
+				$queues[] = $queue;
+			} catch(Exception $exception) {
+				// if the row couldn't be converted, rethrow it
+				throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
+			}
+		}
+
+		// count the results in the array and return:
+		// 1) null if 0 results
+		// 2) the entire array if >= 1 result
+		$numberOfQueues = count($queues);
+		if($numberOfQueues === 0) {
+			return (null);
+		} else {
+			return ($queues);
+		}
+
+	}
+
 }
 ?>

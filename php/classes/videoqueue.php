@@ -100,6 +100,7 @@ class VideoQueue {
 
 		$this->queueId = intval($newQueueId);
 	}
+
 	/**
 	 * accessor for the videoQueueNumber
 	 *
@@ -140,13 +141,13 @@ class VideoQueue {
 			throw(new mysqli_sql_exception("input is not a mysqli object"));
 		}
 
-		$query	 = "INSERT INTO videoQueue(videoId, queueId, videoQueueNumber) VALUES(?, ?, ?)";
+		$query = "INSERT INTO videoQueue(videoId, queueId, videoQueueNumber) VALUES(?, ?, ?)";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
 
-		$wasClean	  = $statement->bind_param("iii", $this->videoId, $this->queueId, $this->videoQueueNumber);
+		$wasClean = $statement->bind_param("iii", $this->videoId, $this->queueId, $this->videoQueueNumber);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
@@ -157,6 +158,7 @@ class VideoQueue {
 
 		$statement->close();
 	}
+
 	/**
 	 * deletes this videoQueue from mySQL
 	 *
@@ -175,7 +177,7 @@ class VideoQueue {
 		}
 
 		// create query template
-		$query	 = "DELETE FROM videoQueue WHERE videoId = ? AND queueId = ?";
+		$query = "DELETE FROM videoQueue WHERE videoId = ? AND queueId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -195,6 +197,7 @@ class VideoQueue {
 		// clean up the statement
 		$statement->close();
 	}
+
 	/**
 	 * get the video queue by the video id and queue id
 	 *
@@ -222,7 +225,7 @@ class VideoQueue {
 			throw(new mysqli_sql_exception("queue id is not positive"));
 		}
 
-		$query	 = "SELECT videoId, queueId, videoQueueNumber FROM videoQueue WHERE videoId = ? AND queueId = ?";
+		$query = "SELECT videoId, queueId, videoQueueNumber FROM videoQueue WHERE videoId = ? AND queueId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -244,9 +247,9 @@ class VideoQueue {
 
 		try {
 			$videoQueue = null;
-			$row   = $result->fetch_assoc();
+			$row = $result->fetch_assoc();
 			if($row !== null) {
-				$videoQueue	= new VideoQueue($row["videoId"], $row["queueId"], $row["videoQueueNumber"]);
+				$videoQueue = new VideoQueue($row["videoId"], $row["queueId"], $row["videoQueueNumber"]);
 			}
 		} catch(Exception $exception) {
 			throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
@@ -254,8 +257,9 @@ class VideoQueue {
 
 		$result->free();
 		$statement->close();
-		return($videoQueue);
+		return ($videoQueue);
 	}
+
 	/**
 	 * gets all videoQueue
 	 *
@@ -270,7 +274,7 @@ class VideoQueue {
 		}
 
 		// create query template
-		$query	 = "SELECT videoId, queueId, videoQueueNumber FROM videoQueue";
+		$query = "SELECT videoId, queueId, videoQueueNumber FROM videoQueue";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -291,10 +295,9 @@ class VideoQueue {
 		$videoQueues = array();
 		while(($row = $result->fetch_assoc()) !== null) {
 			try {
-				$videoQueue	= new VideoQueue($row["videoId"], $row["queueId"], $row["videoQueueNumber"]);
+				$videoQueue = new VideoQueue($row["videoId"], $row["queueId"], $row["videoQueueNumber"]);
 				$videoQueues[] = $videoQueue;
-			}
-			catch(Exception $exception) {
+			} catch(Exception $exception) {
 				// if the row couldn't be converted, rethrow it
 				throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
 			}
@@ -305,10 +308,61 @@ class VideoQueue {
 		// 2) the entire array if >= 1 result
 		$numberOfVideoQueues = count($videoQueues);
 		if($numberOfVideoQueues === 0) {
-			return(null);
+			return (null);
 		} else {
-			return($videoQueues);
+			return ($videoQueues);
 		}
+	}
+
+	public static function getAllVideosByQueueId(&$mysqli, $queueId) {
+		// handle degenerate cases
+		if(gettype($mysqli) !== "object" || get_class($mysqli) !== "mysqli") {
+			throw(new mysqli_sql_exception("input is not a mysqli object"));
+		}
+
+		// create query template
+		$query = "SELECT videoId, queueId, videoQueueNumber FROM videoQueue WHERE queueId = ?";
+		$statement = $mysqli->prepare($query);
+		if($statement === false) {
+			throw(new mysqli_sql_exception("unable to prepare statement"));
+		}
+		$wasClean = $statement->bind_param("i", $queueId);
+		if($wasClean === false) {
+			throw(new mysqli_sql_exception("unable to bind parameters"));
+		}
+
+		// execute the statement
+		if($statement->execute() === false) {
+			throw(new mysqli_sql_exception("unable to execute mySQL statement: " . $statement->error));
+		}
+
+		// get result from the SELECT query
+		$result = $statement->get_result();
+		if($result === false) {
+			throw(new mysqli_sql_exception("unable to get result set"));
+		}
+		// build an array of video
+		$videos = array();
+		while(($row = $result->fetch_assoc()) !== null) {
+			try {
+				$video = new Video($row["videoId"], $row["videoComment"]);
+				$videos[] = $video;
+			} catch(Exception $exception) {
+				// if the row couldn't be converted, rethrow it
+				throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
+			}
+		}
+
+		// count the results in the array and return:
+		// 1) null if 0 results
+		// 2) the entire array if >= 1 result
+		$numberOfVideos = count($videos);
+		if($numberOfVideos === 0) {
+			return (null);
+		} else {
+			return ($videos);
+		}
+
 	}
 }
 ?>
