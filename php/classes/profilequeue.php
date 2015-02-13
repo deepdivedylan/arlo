@@ -17,6 +17,12 @@ class ProfileQueue {
 	 */
 	private $queueId;
 	/**
+	 * @var int $queueId the id of the queue. Foreign Key to the queue entity
+	 */
+	private $profileQueueName;
+
+
+	/**
 	 * constructor of this profileQueue
 	 *
 	 * @param int $newProfileId id of the profile
@@ -24,10 +30,11 @@ class ProfileQueue {
 	 * @throws InvalidArgumentException if data types are not valid
 	 * @throws RangeException if data values are out of bounds
 	 */
-	public function __construct($newProfileId, $newQueueId) {
+	public function __construct($newProfileId, $newQueueId, $newProfileQueueName) {
 		try {
 			$this->setProfileId($newProfileId);
 			$this->setQueueId($newQueueId);
+			$this->setProfileQueueName($newProfileQueueName);
 		} catch(InvalidArgumentException $invalidArgument) {
 			throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
 		} catch(RangeException $range) {
@@ -92,6 +99,32 @@ class ProfileQueue {
 
 		$this->queueId = intval($newQueueId);
 	}
+	/**
+	 * accessor method for video comment of the video
+	 *
+	 * @return string value of video comment
+	 **/
+	public function getProfileQueueName() {
+		return ($this->profileQueueName);
+	}
+
+	/**
+	 * mutator method for video comment of the video
+	 *
+	 * @param string $newVideoComment new value of video comment
+	 * @throws InvalidArgumentException if $newVideoComment is not a string or insecure
+	 **/
+	public function setProfileQueueName($newProfileQueueName) {
+	// verify that the video comment is secure
+		$newProfileQueueName = trim($newProfileQueueName);
+		$newProfileQueueName = filter_var($newProfileQueueName, FILTER_SANITIZE_STRING);
+		if(empty($newProfileQueueName) === true) {
+			throw(new InvalidArgumentException("profile queue name is empty or insecure"));
+		}
+
+		// store the profile image path
+		$this->profileQueueName = $newProfileQueueName;
+	}
 
 	/**
 	 * insert this profileQueue into mySQL
@@ -104,13 +137,13 @@ class ProfileQueue {
 			throw(new mysqli_sql_exception("input is not a mysqli object"));
 		}
 
-		$query	 = "INSERT INTO profileQueue(profileId, queueId) VALUES(?, ?)";
+		$query	 = "INSERT INTO profileQueue(profileId, queueId, profileQueueName) VALUES(?, ?, ?)";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
 
-		$wasClean	  = $statement->bind_param("ii", $this->profileId, $this->queueId);
+		$wasClean	  = $statement->bind_param("iis", $this->profileId, $this->queueId, $this->profileQueueName);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
@@ -186,7 +219,7 @@ class ProfileQueue {
 			throw(new mysqli_sql_exception("queue id is not positive"));
 		}
 
-		$query	 = "SELECT profileId, queueId FROM profileQueue WHERE profileId = ? AND queueId = ?";
+		$query	 = "SELECT profileId, queueId, profileQueueName FROM profileQueue WHERE profileId = ? AND queueId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -210,7 +243,7 @@ class ProfileQueue {
 			$profileQueue = null;
 			$row   = $result->fetch_assoc();
 			if($row !== null) {
-				$profileQueue	= new ProfileQueue($row["profileId"], $row["queueId"]);
+				$profileQueue	= new ProfileQueue($row["profileId"], $row["queueId"], $row["profileQueueName"]);
 			}
 		} catch(Exception $exception) {
 			throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
@@ -234,7 +267,7 @@ class ProfileQueue {
 		}
 
 		// create query template
-		$query	 = "SELECT profileId, queueId FROM profileQueue";
+		$query	 = "SELECT profileId, queueId, profileQueueName FROM profileQueue";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -255,7 +288,7 @@ class ProfileQueue {
 		$profileQueues = array();
 		while(($row = $result->fetch_assoc()) !== null) {
 			try {
-				$profileQueue	= new ProfileQueue($row["profileId"], $row["queueId"]);
+				$profileQueue	= new ProfileQueue($row["profileId"], $row["queueId"], $row["profileQueueName"]);
 				$profileQueues[] = $profileQueue;
 			}
 			catch(Exception $exception) {

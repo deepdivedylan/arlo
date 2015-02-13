@@ -26,7 +26,7 @@ class ArloSuite extends TestSuite {
 
 		// stuff the test files into an array
 		// TODO: add the files in the "forward" order
-		$testFiles = array("profile.php", "queue.php", "video.php", "profilequeue.php", "videoqueue.php");
+		$testFiles = array("profile-test2.php", "queue-test2.php", "video-test.php", "profilequeue-test.php", "videoqueue-test.php");
 
 		// run them forward
 		foreach($testFiles as $testFile) {
