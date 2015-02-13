@@ -16,18 +16,26 @@ class VideoQueue {
 	 * @var int $queueId the id of the queue. Foreign Key to the queue entity
 	 */
 	private $queueId;
+
+	/**
+	 * @var int $videoQueueNumber the number of the video in the queue.
+	 */
+	private $videoQueueNumber;
+
 	/**
 	 * constructor of this videoQueue
 	 *
 	 * @param int $newVideoId id of the video
 	 * @param int $newQueueId id of the queue
+	 * @param int $newVideoQueueNumber number of the video in the queue
 	 * @throws InvalidArgumentException if data types are not valid
 	 * @throws RangeException if data values are out of bounds
 	 */
-	public function __construct($newVideoId, $newQueueId) {
+	public function __construct($newVideoId, $newQueueId, $newVideoQueueNumber) {
 		try {
 			$this->setVideoId($newVideoId);
 			$this->setQueueId($newQueueId);
+			$this->setVideoQueueNumber($newVideoQueueNumber);
 		} catch(InvalidArgumentException $invalidArgument) {
 			throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
 		} catch(RangeException $range) {
@@ -92,6 +100,34 @@ class VideoQueue {
 
 		$this->queueId = intval($newQueueId);
 	}
+	/**
+	 * accessor for the videoQueueNumber
+	 *
+	 * @return int value for the videoQueueNumber
+	 */
+	public function getVideoQueueNumber() {
+		return $this->videoQueueNumber;
+	}
+
+	/**
+	 * mutator for the video id
+	 *
+	 * @param int $newVideoId for the video id
+	 * @throws InvalidArgumentException if data types are not valid
+	 * @throws RangeException if $newVideoId is less than 0
+	 */
+	public function setVideoQueueNumber($newVideoQueueNumber) {
+		$newVideoQueueNumber = filter_var($newVideoQueueNumber, FILTER_VALIDATE_INT);
+		if($newVideoQueueNumber === false) {
+			throw(new InvalidArgumentException("video queue number is not a valid integer"));
+		}
+
+		if($newVideoQueueNumber <= 0) {
+			throw(new RangeException("video queue number must be positive"));
+		}
+
+		$this->videoQueueNumber = intval($newVideoQueueNumber);
+	}
 
 	/**
 	 * insert this videoQueue into mySQL
@@ -104,13 +140,13 @@ class VideoQueue {
 			throw(new mysqli_sql_exception("input is not a mysqli object"));
 		}
 
-		$query	 = "INSERT INTO videoQueue(videoId, queueId) VALUES(?, ?)";
+		$query	 = "INSERT INTO videoQueue(videoId, queueId, videoQueueNumber) VALUES(?, ?, ?)";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
 
-		$wasClean	  = $statement->bind_param("ii", $this->videoId, $this->queueId);
+		$wasClean	  = $statement->bind_param("iii", $this->videoId, $this->queueId, $this->videoQueueNumber);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
@@ -186,7 +222,7 @@ class VideoQueue {
 			throw(new mysqli_sql_exception("queue id is not positive"));
 		}
 
-		$query	 = "SELECT videoId, queueId FROM videoQueue WHERE videoId = ? AND queueId = ?";
+		$query	 = "SELECT videoId, queueId, videoQueueNumber FROM videoQueue WHERE videoId = ? AND queueId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -210,7 +246,7 @@ class VideoQueue {
 			$videoQueue = null;
 			$row   = $result->fetch_assoc();
 			if($row !== null) {
-				$videoQueue	= new VideoQueue($row["videoId"], $row["queueId"]);
+				$videoQueue	= new VideoQueue($row["videoId"], $row["queueId"], $row["videoQueueNumber"]);
 			}
 		} catch(Exception $exception) {
 			throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
@@ -234,7 +270,7 @@ class VideoQueue {
 		}
 
 		// create query template
-		$query	 = "SELECT videoId, queueId FROM videoQueue";
+		$query	 = "SELECT videoId, queueId, videoQueueNumber FROM videoQueue";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -255,7 +291,7 @@ class VideoQueue {
 		$videoQueues = array();
 		while(($row = $result->fetch_assoc()) !== null) {
 			try {
-				$videoQueue	= new VideoQueue($row["videoId"], $row["queueId"]);
+				$videoQueue	= new VideoQueue($row["videoId"], $row["queueId"], $row["videoQueueNumber"]);
 				$videoQueues[] = $videoQueue;
 			}
 			catch(Exception $exception) {

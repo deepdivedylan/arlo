@@ -37,11 +37,11 @@ class ProfileQueueTest extends UnitTestCase {
 		$configArray["database"]);
 		// instance of objects under scrutiny
 		$date = new DateTime();
-		$this->profile = new Profile(null, "test@test.com", 'http://www.cats.com/cat.jpg');
+		$this->profile = new Profile(null, "test@test.com", 'http://www.cats.com/cat.jpg', 10);
 		$this->profile->insert($this->mysqli);
 		$this->queue = new Queue(null, $date);
 		$this->queue->insert($this->mysqli);
-		$this->profileQueue = new ProfileQueue($this->profile->getProfileId(), $this->queue->getQueueId());
+		$this->profileQueue = new ProfileQueue($this->profile->getProfileId(), $this->queue->getQueueId(), 'Horror movies');
 	}
 
 	/**
@@ -82,6 +82,8 @@ class ProfileQueueTest extends UnitTestCase {
 		// third, assert the ProfileQueue we have created and mySQL's ProfileQueue are the same object
 		$this->assertIdentical($this->profileQueue->getProfileId(), $mysqlProfileQueue->getProfileId());
 		$this->assertIdentical($this->profileQueue->getQueueId(), $mysqlProfileQueue->getQueueId());
+		$this->assertIdentical($this->profileQueue->getProfileQueueName(), $mysqlProfileQueue->getProfileQueueName());
+
 	}
 
 	/**
@@ -113,6 +115,7 @@ class ProfileQueueTest extends UnitTestCase {
 		$mysqlProfileQueue = ProfileQueue::getProfileQueueByProfileIdAndQueueId($this->mysqli, $this->profileQueue->getProfileId(), $this->profileQueue->getQueueId());
 		$this->assertIdentical($this->profileQueue->getProfileId(), $mysqlProfileQueue->getProfileId());
 		$this->assertIdentical($this->profileQueue->getQueueId(), $mysqlProfileQueue->getQueueId());
+		$this->assertIdentical($this->profileQueue->getProfileQueueName(), $mysqlProfileQueue->getProfileQueueName());
 		// second, delete the ProfileQueue from mySQL and re-grab it from mySQL and assert it does not exist
 		$this->profileQueue->delete($this->mysqli);
 		$mysqlProfileQueue = ProfileQueue::getProfileQueueByProfileIdAndQueueId($this->mysqli, $this->profileQueue->getProfileId(), $this->profileQueue->getQueueId());
@@ -139,6 +142,8 @@ class ProfileQueueTest extends UnitTestCase {
 			$this->assertTrue($mysqlProfileQueue->getQueueId() > 0);
 			$this->assertIdentical($this->profileQueue->getProfileId(), $mysqlProfileQueue->getProfileId());
 			$this->assertIdentical($this->profileQueue->getQueueId(), $mysqlProfileQueue->getQueueId());
+			$this->assertIdentical($this->profileQueue->getProfileQueueName(), $mysqlProfileQueue->getProfileQueueName());
+
 		}
 	}
 
