@@ -13,7 +13,7 @@ require_once("../lib/encrypted-config.php");
  **/
 
 // the ProfileTest is a container for all our tests
-class ProfileTest extends unitTestCase {
+class ProfileTest extends UnitTestCase {
 	/**
 	 * mysqli object shared amongst all tests
 	 **/

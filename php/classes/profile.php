@@ -128,13 +128,9 @@ class Profile {
 	 **/
 	public function setImagePath($newImagePath) {
 
-		if(empty($newImagePath) === true) {
-			$this->imagePath = null;
-			return;
-		}
 		// verify that the profile image path is secure
 		$newImagePath = trim($newImagePath);
-		$newImagePath = filter_var($newImagePath, FILTER_VALIDATE_URL);
+		$newImagePath = filter_var($newImagePath, FILTER_SANITIZE_STRING);
 		if(empty($newImagePath) === true) {
 			throw(new InvalidArgumentException("image path is empty or insecure"));
 		}
@@ -161,10 +157,10 @@ class Profile {
 		}
 		// enforce the profileId is null (i.e., don't insert a profile that already exists)
 		if($this->profileId !== null) {
-			throw(new mysqli_sql_exception("this profile already exists"));
+			throw(new mysqli_sql_exception("not a new profile"));
 		}
 		// create query template
-		$query = "INSERT INTO profile (email, imagePath) VALUES (?, ?)";
+		$query = "INSERT INTO profile(email, imagePath) VALUES(?, ?)";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -172,14 +168,13 @@ class Profile {
 		// bind the member variables to the place holders in the template
 		$wasClean = $statement->bind_param("ss", $this->email, $this->imagePath);
 		if($wasClean === false) {
-			throw(new mysqli_sql_exception("unable to bind parameters:"));
+			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
-		var_dump($wasClean);
 		// execute the statement
 		if($statement->execute() === false) {
-			throw(new mysqli_sql_exception("unable to execute mySQL statement"));
+			throw(new mysqli_sql_exception("unable to execute mySQL statement: " . $statement->error));
 		}
-		// update the null profileId with what mysql just gave us
+		// update the null profileId with what mySQL just gave us
 		$this->profileId = $mysqli->insert_id;
 		// clean up the statement
 		$statement->close();
@@ -261,12 +256,11 @@ class Profile {
 	 * @return mixed profile found or null if not found
 	 * @throws mysqli_sql_exception when mySQL related errors occur
 	 **/
-	public static function getProfileByProfileId (&$mysqli, $profileId) {
+	public static function getProfileByProfileId(&$mysqli, $profileId) {
 		// handle degenerate cases
 		if(gettype($mysqli) !== "object" || get_class($mysqli) !== "mysqli") {
 			throw(new mysqli_sql_exception("input is not a mysqli object"));
 		}
-
 		// sanitize the profileId before searching
 		$profileId = filter_var($profileId, FILTER_VALIDATE_INT);
 		if($profileId === false) {
@@ -275,31 +269,26 @@ class Profile {
 		if($profileId <= 0) {
 			throw(new mysqli_sql_exception("profile id is not positive"));
 		}
-
 		// create query template
 		$query = "SELECT profileId, email, imagePath FROM profile WHERE profileId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
-
-		// bind the profile id to the place holder in the template
+		// bind the profile content to the place holder in the template
 		$wasClean = $statement->bind_param("i", $profileId);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
-
 		// execute the statement
 		if($statement->execute() === false) {
 			throw(new mysqli_sql_exception("unable to execute mySQL statement: " . $statement->error));
 		}
-
 		// get result from the SELECT query
 		$result = $statement->get_result();
 		if($result === false) {
 			throw(new mysqli_sql_exception("unable to get result set"));
 		}
-
 		// grab the profile from mySQL
 		try {
 			$profile = null;
@@ -311,11 +300,10 @@ class Profile {
 			// if the row couldn't be converted, rethrow it
 			throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
 		}
-
 		// free up memory and return the result
 		$result->free();
 		$statement->close();
-		return ($profile);
+		return($profile);
 	}
 	/**
 	 * gets the profile by email
