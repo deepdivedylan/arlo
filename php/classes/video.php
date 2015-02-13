@@ -17,6 +17,11 @@ class Video {
 	private $videoComment;
 
 	/**
+	 * video comment of the video
+	 **/
+	private $imdbId;
+
+	/**
 	 * constructor for this video class
 	 *
 	 * @param mixed $newVideoId id of the video
@@ -24,10 +29,12 @@ class Video {
 	 * @throws InvalidArgumentException it data types are not valid
 	 * @throws RangeException if data values are out of bounds (e.g. strings too long, negative integers)
 	 **/
-	public function __construct($newVideoId, $newVideoComment = null) {
+	public function __construct($newVideoId, $newVideoComment = null, $newImdbId) {
 		try {
 			$this->setVideoId($newVideoId);
 			$this->setVideoComment($newVideoComment);
+			$this->setImdbId($newImdbId);
+
 		} catch(InvalidArgumentException $invalidArgument) {
 			// rethrow the exception to the caller
 			throw(new InvalidArgumentException($invalidArgument->getMessage(), 0, $invalidArgument));
@@ -100,6 +107,32 @@ class Video {
 		// store the profile image path
 		$this->videoComment = $newVideoComment;
 	}
+	/**
+	 * accessor method for video comment of the video
+	 *
+	 * @return string value of video comment
+	 **/
+	public function getImdbId() {
+		return ($this->imdbId);
+	}
+
+	/**
+	 * mutator method for video comment of the video
+	 *
+	 * @param string $newVideoComment new value of video comment
+	 * @throws InvalidArgumentException if $newVideoComment is not a string or insecure
+	 **/
+	public function setImdbId($newImdbId) {
+		// verify that the video comment is secure
+		$newImdbId = trim($newImdbId);
+		$newImdbId = filter_var($newImdbId, FILTER_SANITIZE_STRING);
+		if(empty($newImdbId) === true) {
+			throw(new InvalidArgumentException("imdb id is empty or insecure"));
+		}
+
+		// store the profile image path
+		$this->imdbId = $newImdbId;
+	}
 
 	/**
 	 * inserts this video into mySQL
@@ -117,13 +150,13 @@ class Video {
 			throw(new mysqli_sql_exception("this video already exists"));
 		}
 		// create query template
-		$query = "INSERT INTO video (videoComment) VALUES (?)";
+		$query = "INSERT INTO video (videoComment, imdbId) VALUES (?, ?)";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
 		// bind the member variables to the place holders in the template
-		$wasClean = $statement->bind_param("s", $this->videoComment);
+		$wasClean = $statement->bind_param("ss", $this->videoComment, $this->imdbId);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters:"));
 		}
@@ -187,13 +220,13 @@ class Video {
 			throw(new mysqli_sql_exception("unable to update a video that does not exist"));
 		}
 		// create a query template
-		$query = "UPDATE video SET videoComment = ? WHERE videoId = ?";
+		$query = "UPDATE video SET videoComment = ?, imdbId = ? WHERE videoId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
 		}
 		// bind the member variables to the place holders in the template
-		$wasClean = $statement->bind_param("si", $this->videoComment, $this->videoId);
+		$wasClean = $statement->bind_param("ssi", $this->videoComment, $this->imdbId, $this->videoId);
 		if($wasClean === false) {
 			throw(new mysqli_sql_exception("unable to bind parameters"));
 		}
@@ -229,7 +262,7 @@ class Video {
 		}
 
 		// create query template
-		$query = "SELECT videoId, videoComment FROM video WHERE videoId = ?";
+		$query = "SELECT videoId, videoComment, imdbId FROM video WHERE videoId = ?";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -257,7 +290,7 @@ class Video {
 			$video = null;
 			$row = $result->fetch_assoc();
 			if($row !== null) {
-				$video = new Video($row["videoId"], $row["videoComment"]);
+				$video = new Video($row["videoId"], $row["videoComment"], $row["imdbId"]);
 			}
 		} catch(Exception $exception) {
 			// if the row couldn't be converted, rethrow it
@@ -268,6 +301,56 @@ class Video {
 		$result->free();
 		$statement->close();
 		return ($video);
+	}
+	public static function getAllVideosByImdbId(&$mysqli, $imdbId) {
+		// handle degenerate cases
+		if(gettype($mysqli) !== "object" || get_class($mysqli) !== "mysqli") {
+			throw(new mysqli_sql_exception("input is not a mysqli object"));
+		}
+
+		// create query template
+		$query = "SELECT videoId, videoComment, imdbId FROM video WHERE imdbId = ?";
+		$statement = $mysqli->prepare($query);
+		if($statement === false) {
+			throw(new mysqli_sql_exception("unable to prepare statement"));
+		}
+		$wasClean = $statement->bind_param("i", $imdbId);
+		if($wasClean === false) {
+			throw(new mysqli_sql_exception("unable to bind parameters"));
+		}
+
+		// execute the statement
+		if($statement->execute() === false) {
+			throw(new mysqli_sql_exception("unable to execute mySQL statement: " . $statement->error));
+		}
+
+		// get result from the SELECT query
+		$result = $statement->get_result();
+		if($result === false) {
+			throw(new mysqli_sql_exception("unable to get result set"));
+		}
+		// build an array of video
+		$videos = array();
+		while(($row = $result->fetch_assoc()) !== null) {
+			try {
+				$video = new Video($row["videoId"], $row["videoComment"], $row["imdbId"]);
+				$videos[] = $video;
+			} catch(Exception $exception) {
+				// if the row couldn't be converted, rethrow it
+				throw(new mysqli_sql_exception($exception->getMessage(), 0, $exception));
+			}
+		}
+
+		// count the results in the array and return:
+		// 1) null if 0 results
+		// 2) the entire array if >= 1 result
+		$numberOfVideos = count($videos);
+		if($numberOfVideos === 0) {
+			return (null);
+		} else {
+			return ($videos);
+		}
+
 	}
 	/**
 	 * gets all videos
@@ -283,7 +366,7 @@ class Video {
 		}
 
 		// create query template
-		$query	 = "SELECT videoId, videoComment FROM video";
+		$query	 = "SELECT videoId, videoComment, imdbId FROM video";
 		$statement = $mysqli->prepare($query);
 		if($statement === false) {
 			throw(new mysqli_sql_exception("unable to prepare statement"));
@@ -304,7 +387,7 @@ class Video {
 		$videos = array();
 		while(($row = $result->fetch_assoc()) !== null) {
 			try {
-				$video	= new Video($row["videoId"], $row["videoComment"]);
+				$video	= new Video($row["videoId"], $row["videoComment"], $row["imdbId"]);
 				$videos[] = $video;
 			}
 			catch(Exception $exception) {

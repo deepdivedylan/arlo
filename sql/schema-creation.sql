@@ -21,6 +21,8 @@ CREATE TABLE queue (
 CREATE TABLE video (
 	videoId INT UNSIGNED NOT NULL AUTO_INCREMENT,
 	videoComment TEXT,
+	imdbId VARCHAR(24),
+	UNIQUE(imdbId),
 	PRIMARY KEY(videoId)
 );
 
