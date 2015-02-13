@@ -12,26 +12,32 @@ require_once("../lib/encrypted-config.php");
  * @author James Mistalski <james.mistalski@gmail.com>
  **/
 
-// the VideoTest is a container for all our tests
-class VideoTest extends unitTestCase {
+// the videoTest is a container for all our tests
+
+class VideoTest extends UnitTestCase {
 	/**
 	 * mysqli object shared amongst all tests
-	 */
+	 **/
 	private $mysqli = null;
 
 	/**
-	 * variable to hold the test database row
-	 */
-	private $video = null;
+	 * first instance of the object we are testing with
+	 **/
+	private $video1 = null;
 
 	/**
-	 * instance of the objects we are testing with
-	 */
-	private $videoComment = "Best movie I've seen in a while!";
+	 * second instance of the object we are testing with
+	 **/
+	private $video2 = null;
+
+	/**
+	 * seller's image path
+	 **/
+	private $videoComment = "Cool movie!";
 
 	/**
 	 * sets up the mySQL connection for this test
-	 */
+	 **/
 	public function setUp() {
 		// get the credentials information from the server
 		$configFile = "/etc/apache2/arlo.ini";
@@ -40,103 +46,175 @@ class VideoTest extends unitTestCase {
 		mysqli_report(MYSQLI_REPORT_STRICT);
 		$this->mysqli = new mysqli($configArray["hostname"], $configArray["username"], $configArray["password"],
 			$configArray["database"]);
+		// create instance of first video
+		$this->video1 = new Video(null, $this->videoComment);
+
+		$this->video2 = new Video(null, "Not cool!");
 	}
 
 	/**
-	 * tears down the connection to mySQl and deletes the test instance object
-	 */
+	 * tears down the connection to mySQL and deletes the test instance object
+	 **/
 	public function tearDown() {
-		// destroy the objects if they were created
-		if($this->video !== null) {
-			$this->video->delete($this->mysqli);
-			$this->video = null;
+//	echo '<br>tearDown start<br>';
+		// destroy the object if it was created
+		if($this->video1 !== null && $this->video1->getVideoId() !== null) {
+			$this->video1->delete($this->mysqli);
+		}
+		$this->video1 = null;
 
-			// disconnect from mySQL
-			if($this->mysqli !== null) {
-				$this->mysqli->close();
-				$this->mysqli = null;
-			}
+		if($this->video2 !== null && $this->video2->getVideoId() !== null) {
+			$this->video2->delete($this->mysqli);
+		}
+		$this->video2 = null;
+
+		// disconnect from mySQL
+		if($this->mysqli !== null) {
+			$this->mysqli->close();
+			$this->mysqli = null;
 		}
 	}
-
-	public function testInsertNewProfile() {
-		// zeroth, verify mySQL connected OK
+	/**
+	 * test inserting a valid video into mySQL
+	 **/
+	public function testInsertValidVideo() {
+		// zeroth, ensure the video and mySQL class are sane
+		$this->assertNotNull($this->video1);
 		$this->assertNotNull($this->mysqli);
-		// first, create a Video to post to mySQL
-		$this->video = new Video(null, $this->videoComment);
-		// second, insert the Video to mySQL
-		$this->profile->insert($this->mysqli);
-		// finally, compare the fields
-		$this->assertNotNull($this->video->getVideoId());
-		$this->assertTrue($this->video->getVideoId() > 0);
-		$this->assertIdentical($this->video->getVideoComment(),	$this->videoComment);
+
+		// first, insert the video into mySQL
+		$this->video1->insert($this->mysqli);
+
+		// second, grab a video from mySQL
+		$mysqlVideo = Video::getVideoByVideoId($this->mysqli, $this->video1->getVideoId());
+
+		// third, assert the video we have created and mySQL's video are the same object
+		$this->assertIdentical($this->video1->getVideoId(), $mysqlVideo->getVideoId());
+		$this->assertIdentical($this->video1->getVideoComment(), $mysqlVideo->getVideoComment());
 	}
 
 	/**
-	 * test updating a Video in mySQl
-	 */
-	public function testUpdateVideo() {
-		// zeroth, verify mySQL connected OK
+	 * test inserting an invalid video into mySQL
+	 **/
+	public function testInsertInvalidVideo() {
+		// zeroth, ensure the video and mySQL class are sane
+		$this->assertNotNull($this->video1);
 		$this->assertNotNull($this->mysqli);
-		// first, create a video to post to mySQL
-		$this->video = new Video(null, $this->videoComment);
-		// second, insert the video to mySQL
-		$this->video->insert($this->mysqli);
-		// third, update the video and post the changes to mySQL
-		$newVideoComment = "I take it back, this is the WORST movie I have EVER seen!!!";
-		$this->video->setVideoComment($newVideoComment);
-		$this->video->update($this->mysqli);
-		// finally, compare the fields
-		$this->assertNotNull($this->video->getVideoId());
-		$this->assertTrue($this->video->getVideoId() > 0);
-		$this->assertIdentical($this->video->getVideoComment(),	$this->$newVideoComment);
+
+		// first, set the video id to an invented value that should never insert in the first place
+		$this->video1->setVideoId(1042);
+
+		// second, try to insert the video and ensure the exception is thrown
+		$this->expectException("mysqli_sql_exception");
+		$this->video1->insert($this->mysqli);
+
+		// third, set the video to null to prevent tearDown() from deleting a video that never existed
+		$this->video1 = null;
 	}
 
 	/**
-	 * test deleting a Video in mySQL
-	 */
-	public function testDeleteVideo() {
-		// zeroth, verify mySQL connected OK
+	 * test deleting a video from mySQL
+	 **/
+	public function testDeleteValidVideo() {
+		// zeroth, ensure the video and mySQL class are sane
+		$this->assertNotNull($this->video1);
 		$this->assertNotNull($this->mysqli);
-		// first, create a video to post to mySQL
-		$this->video = new Video(null, $this->videoComment);
-		// second, insert the Video to mySQL
-		$this->video->insert($this->mysqli);
-		// third, verify the Video was inserted
-		$this->assertNotNull($this->video->getVideoId());
-		$this->assertTrue($this->video->getVideoId() > 0);
-		// fourth, delete the Video
-		$destroyVideoId = $this->video->getVideoId();
-		$this->video->delete($this->mysqli);
-		$this->video = null;
-		// finally, try to get the video and assert we didn't get anything
-		$staticVideo = Video::getVideoByVideoId($this->mysqli, $destroyVideoId);
-		$this->assertNull($staticVideo);
+
+		// first, assert the video is inserted into mySQL by grabbing it from mySQL and asserting the primary key
+		$this->video1->insert($this->mysqli);
+		$mysqlVideo = Video::getVideoByVideoId($this->mysqli, $this->video1->getVideoId());
+		$this->assertIdentical($this->video1->getVideoId(), $mysqlVideo->getVideoId());
+
+		// second, delete the video from mySQL and re-grab it from mySQL and assert it does not exist
+		$this->video1->delete($this->mysqli);
+		$mysqlVideo = Video::getVideoByVideoId($this->mysqli, $this->video1->getVideoId());
+		$this->assertNull($mysqlVideo);
+
+		// third, set the video to null to prevent tearDown() from deleting a video that has already been deleted
+		$this->video1 = null;
 	}
 
 	/**
-	 * test grabbing a Video from mySQL
-	 */
-	public function testGetVideoByVideoId() {
-		// zeroth, verify mySQL connected OK
+	 * test deleting a non existent video from mySQL
+	 **/
+	public function testDeleteInvalidVideo() {
+		// zeroth, ensure the video and mySQL class are sane
+		$this->assertNotNull($this->video1);
 		$this->assertNotNull($this->mysqli);
-		// first, create a video to post to mySQL
-		$this->video = new Video(null, $this->videoComment);
-		// second, insert the video to mySQL
-		$this->video->insert($this->mysqli);
-		// third, get teh video using the static method
-		$staticVideo = Video::getVideoByVideoId($this->mysqli, $this->video->getVideoId());
-		// finally, compare the fields
-		$this->assertNotNull($staticVideo->getVideoId());
-		$this->assertTrue($staticVideo->getVideoId() > 0);
-		$this->assertIdentical($staticVideo->getVideoComment(),	$this->videoComment);
+
+		// first, try to delete the video before inserting it and ensure the exception is thrown
+		$this->expectException("mysqli_sql_exception");
+		$this->video1->delete($this->mysqli);
+
+		// second, set the video to null to prevent tearDown() from deleting a video that has already been deleted
+		$this->video1 = null;
 	}
 
-	// TODO: connect with Dylan and Alonso how to write up this static method get
-//	public function testGetVideoByAllVideos() {
-//
-//	}
+	/**
+	 * test updating a video from mySQL
+	 **/
+	public function testUpdateValidVideo() {
+		// zeroth, ensure the video and mySQL class are sane
+		$this->assertNotNull($this->video1);
+		$this->assertNotNull($this->mysqli);
 
+		// first, assert the video is inserted into mySQL by grabbing it from mySQL and asserting the primary key
+		$this->video1->insert($this->mysqli);
+		$mysqlVideo = Video::getVideoByVideoId($this->mysqli, $this->video1->getVideoId());
+		$this->assertIdentical($this->video1->getVideoId(), $mysqlVideo->getVideoId());
+
+		// second, change the video, update it mySQL
+		$newVideoComment = "Awesome!";
+		$this->video1->setVideoComment($newVideoComment);
+		$this->video1->update($this->mysqli);
+
+		// third, re-grab the video from mySQL
+		$mysqlVideo = Video::getVideoByVideoId($this->mysqli, $this->video1->getVideoId());
+		$this->assertNotNull($mysqlVideo);
+
+		// fourth, assert the video we have updated and mySQL's video are the same object
+		$this->assertIdentical($this->video1->getVideoId(), $mysqlVideo->getVideoId());
+		$this->assertIdentical($this->video1->getVideoComment(), $mysqlVideo->getVideoComment());
+	}
+
+	/**
+	 * test updating a non existent video from mySQL
+	 **/
+	public function testUpdateInvalidVideo() {
+		// zeroth, ensure the video and mySQL class are sane
+		$this->assertNotNull($this->video1);
+		$this->assertNotNull($this->mysqli);
+
+		// first, try to update the video before inserting it and ensure the exception is thrown
+		$this->expectException("mysqli_sql_exception");
+		$this->video1->update($this->mysqli);
+
+		// second, set the video to null to prevent tearDown() from deleting a video that has already been deleted
+		$this->video1 = null;
+	}
+	/**
+	 *test getting a valid video by videoId
+	 **/
+	public function testGetValidVideoByVideoId() {
+		$this->assertNotNull($this->video1);
+		$this->assertNotNull($this->mysqli);
+
+		// first, assert the video is inserted into mySQL by grabbing it and asserting the primary key
+		$this->video1->insert($this->mysqli);
+		$mysqlVideo = Video::getVideoByVideoId($this->mysqli, $this->video1->getVideoId());
+		$this->assertIdentical($this->video1->getVideoId(), $mysqlVideo->getVideoId());
+	}
+
+	/**
+	 * test getting a valid video by using an invalid videoId
+	 **/
+	public function testGetInvalidVideoByVideoId() {
+		// first, assert the mySQL class is sane
+		$this->assertNotNull($this->mysqli);
+
+		// grab a video that could never exist
+		$mysqlVideo = Video::getVideoByVideoId($this->mysqli, 12);
+		$this->assertNull($mysqlVideo);
+	}
 }
-
 ?>
