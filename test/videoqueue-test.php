@@ -22,8 +22,26 @@ class VideoQueueTest extends unitTestCase {
 	private $mysqli	= null;
 
 	/**
-	 *
+	 * instance of the object we are testing with
 	 */
+	private $videoQueueNumber = null;
+	private $profile = null;
+	private $video = null;
+
+	/**
+	 * sets up the mySQL connection for this test
+	 **/
+	public function setUp() {
+		// get the credentials information from the server
+		$configFile = "/etc/apache2/arlo.ini";
+		$configArray = readConfig($configFile);
+		// connection
+		mysqli_report(MYSQLI_REPORT_STRICT);
+		$this->mysqli = new mysqli($configArray["hostname"], $configArray["username"], $configArray["password"],
+			$configArray["database"]);
+		// instance of objects under scrutiny
+
+	}
 
 }
 
